@@ -1,6 +1,7 @@
 '''Live progress dashboard for a running WESTPA simulation.'''
 
 import os
+from datetime import timedelta
 
 import numpy as np
 
@@ -49,3 +50,10 @@ def read_progress(we_h5filename, max_total_iterations=None, n_recent=5):
         'avg_walltime': avg_walltime,
         'eta': eta,
     }
+
+
+def _duration(seconds):
+    '''Format seconds as H:MM:SS, or 'unknown' for None.'''
+    if seconds is None:
+        return 'unknown'
+    return str(timedelta(seconds=round(seconds)))

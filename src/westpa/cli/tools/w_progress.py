@@ -1,7 +1,7 @@
 '''Live progress dashboard for a running WESTPA simulation.'''
 
 import os
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import numpy as np
 
@@ -57,3 +57,30 @@ def _duration(seconds):
     if seconds is None:
         return 'unknown'
     return str(timedelta(seconds=round(seconds)))
+
+
+def format_progress(progress):
+    '''Build the dashboard text from a read_progress() dict.'''
+    n_completed = progress['n_completed']
+    max_total_iterations = progress['max_total_iterations']
+    if max_total_iterations:
+        percent = 100 * n_completed / max_total_iterations
+        completed = f'{n_completed} / {max_total_iterations} iterations ({percent:.1f}%)'
+    else:
+        completed = f'{n_completed} completed'
+
+    rows = [
+        ('Last written:', datetime.fromtimestamp(progress['mtime']).strftime('%Y-%m-%d %H:%M:%S')),
+        ('Current iteration:', progress['n_iter']),
+        ('Progress:', completed),
+        ('Segments complete:', f"{progress['n_complete']} / {progress['n_segs']}"),
+        ('Segments failed:', progress['n_failed']),
+        ('Recent walltimes:', ', '.join(map(_duration, progress['recent_walltimes'])) or 'unknown'),
+        ('Avg iteration time:', _duration(progress['avg_walltime'])),
+        ('Completed walltime:', _duration(progress['walltime'])),
+        ('Completed segments:', progress['n_particles']),
+        ('ETA:', _duration(progress['eta'])),
+    ]
+
+    width = 26
+    return ''.join(f'{label.ljust(width)} {value}\n' for label, value in rows)

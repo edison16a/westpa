@@ -12,11 +12,11 @@ from westpa.cli.tools.w_progress import entry_point, format_progress, read_progr
 class Test_W_Progress:
     """Test class for w_progress tool."""
 
-    def args(self, refresh=1.0):
+    def args(self, we_h5filename=None, refresh=1.0):
         return argparse.Namespace(
             verbosity=None,
             rcfile=None,
-            we_h5filename=self.h5_filepath,
+            we_h5filename=we_h5filename or self.h5_filepath,
             refresh=refresh,
         )
 
@@ -118,6 +118,14 @@ ETA:                       0:02:54
         assert output.startswith(f'WESTPA progress for {self.h5_filepath} (updated ')
         assert 'Current iteration:         51\n' in output
         assert 'Progress:                  50 / 50 iterations (100.0%)\n' in output
+
+    def test_missing_file(self, ref_50iter, capsys):
+        with mock.patch('argparse.ArgumentParser.parse_args', return_value=self.args(we_h5filename='missing.h5')):
+            with mock.patch('time.sleep', side_effect=KeyboardInterrupt):
+                entry_point()
+        output = capsys.readouterr().out
+
+        assert 'Could not read missing.h5' in output
 
     def test_refresh_must_be_positive(self, ref_50iter):
         with mock.patch('argparse.ArgumentParser.parse_args', return_value=self.args(refresh=0)):

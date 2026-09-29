@@ -118,3 +118,8 @@ ETA:                       0:02:54
         assert output.startswith(f'WESTPA progress for {self.h5_filepath} (updated ')
         assert 'Current iteration:         51\n' in output
         assert 'Progress:                  50 / 50 iterations (100.0%)\n' in output
+
+    def test_refresh_must_be_positive(self, ref_50iter):
+        with mock.patch('argparse.ArgumentParser.parse_args', return_value=self.args(refresh=0)):
+            with pytest.raises(SystemExit):
+                entry_point()

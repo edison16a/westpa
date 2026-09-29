@@ -1,6 +1,8 @@
 '''Live progress dashboard for a running WESTPA simulation.'''
 
 import os
+import sys
+import time
 from datetime import datetime, timedelta
 
 import numpy as np
@@ -89,30 +91,49 @@ def format_progress(progress):
 
 
 class WProgress(WESTTool):
-    '''Print a progress dashboard.'''
+    '''Redraw a progress dashboard until Ctrl-C.'''
 
     prog = 'w_progress'
-    description = 'Show the progress of a WESTPA simulation.'
+    description = 'Show a live progress dashboard for a WESTPA simulation.'
 
     def __init__(self):
         super().__init__()
         self.data_reader = WESTDataReader()
         self.max_total_iterations = None
+        self.refresh = None
 
     def add_args(self, parser):
-        '''Add the -W option.'''
+        '''Add the -W and --refresh options.'''
         self.data_reader.add_args(parser)
+        parser.add_argument(
+            '--refresh',
+            type=float,
+            default=1.0,
+            metavar='SECONDS',
+            help='Redraw the dashboard every SECONDS seconds (default: %(default)s).',
+        )
 
     def process_args(self, args):
         '''Get the HDF5 file and read max_total_iterations from west.cfg.'''
         self.data_reader.process_args(args)
         self.max_total_iterations = westpa.rc.config.get(['west', 'propagation', 'max_total_iterations'])
 
+        self.refresh = args.refresh
+
     def go(self):
-        '''Print the dashboard once.'''
+        '''Redraw the dashboard every --refresh seconds.'''
         we_h5filename = self.data_reader.we_h5filename
-        print(f'WESTPA progress for {we_h5filename} (updated {datetime.now():%H:%M:%S})\n')
-        print(format_progress(read_progress(we_h5filename, self.max_total_iterations)), end='')
+        try:
+            while True:
+                body = format_progress(read_progress(we_h5filename, self.max_total_iterations))
+
+                if sys.stdout.isatty():
+                    print('\033[H\033[J', end='')  # clear the terminal
+                print(f'WESTPA progress for {we_h5filename} (updated {datetime.now():%H:%M:%S})\n')
+                print(body, end='', flush=True)
+                time.sleep(self.refresh)
+        except KeyboardInterrupt:
+            print()
 
 
 def entry_point():

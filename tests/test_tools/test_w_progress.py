@@ -12,11 +12,12 @@ from westpa.cli.tools.w_progress import entry_point, format_progress, read_progr
 class Test_W_Progress:
     """Test class for w_progress tool."""
 
-    def args(self):
+    def args(self, refresh=1.0):
         return argparse.Namespace(
             verbosity=None,
             rcfile=None,
             we_h5filename=self.h5_filepath,
+            refresh=refresh,
         )
 
     def test_completed_run(self, ref_50iter):
@@ -110,7 +111,8 @@ ETA:                       0:02:54
 
     def test_default(self, ref_50iter, capsys):
         with mock.patch('argparse.ArgumentParser.parse_args', return_value=self.args()):
-            entry_point()
+            with mock.patch('time.sleep', side_effect=KeyboardInterrupt):
+                entry_point()
         output = capsys.readouterr().out
 
         assert output.startswith(f'WESTPA progress for {self.h5_filepath} (updated ')

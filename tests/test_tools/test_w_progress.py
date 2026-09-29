@@ -20,3 +20,14 @@ class Test_W_Progress:
         progress = read_progress(self.h5_filepath, max_total_iterations=60)
 
         assert progress['eta'] == pytest.approx(10 * progress['avg_walltime'])
+
+    def test_initialized_run(self, ref_initialized):
+        progress = read_progress(self.h5_filepath, max_total_iterations=2)
+
+        assert progress['n_iter'] == 1
+        assert progress['n_completed'] == 0
+        assert progress['n_segs'] == 10
+        assert progress['n_complete'] == 0
+        assert progress['n_particles'] == 0
+        assert progress['recent_walltimes'] == []
+        assert progress['eta'] is None

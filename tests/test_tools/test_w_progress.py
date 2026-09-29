@@ -77,3 +77,24 @@ Completed segments:        9985
 ETA:                       0:02:54
 """
         assert format_progress(progress) == expected
+
+    def test_format_progress_unknown(self):
+        progress = {
+            'mtime': 0,
+            'n_iter': 1,
+            'n_completed': 0,
+            'max_total_iterations': None,
+            'n_segs': 10,
+            'n_complete': 0,
+            'n_failed': 0,
+            'n_particles': 0,
+            'walltime': 0.0,
+            'recent_walltimes': [],
+            'avg_walltime': None,
+            'eta': None,
+        }
+        output = format_progress(progress)
+
+        assert 'Progress:                  0 completed\n' in output
+        assert 'Recent walltimes:          unknown\n' in output
+        assert 'ETA:                       unknown\n' in output

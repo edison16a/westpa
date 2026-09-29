@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 
 import numpy as np
 
+import westpa
 from westpa.core.h5io import WESTPAH5File
 from westpa.core.segment import Segment
 from westpa.tools import WESTTool, WESTDataReader
@@ -96,20 +97,22 @@ class WProgress(WESTTool):
     def __init__(self):
         super().__init__()
         self.data_reader = WESTDataReader()
+        self.max_total_iterations = None
 
     def add_args(self, parser):
         '''Add the -W option.'''
         self.data_reader.add_args(parser)
 
     def process_args(self, args):
-        '''Get the HDF5 file from -W or west.cfg.'''
+        '''Get the HDF5 file and read max_total_iterations from west.cfg.'''
         self.data_reader.process_args(args)
+        self.max_total_iterations = westpa.rc.config.get(['west', 'propagation', 'max_total_iterations'])
 
     def go(self):
         '''Print the dashboard once.'''
         we_h5filename = self.data_reader.we_h5filename
         print(f'WESTPA progress for {we_h5filename} (updated {datetime.now():%H:%M:%S})\n')
-        print(format_progress(read_progress(we_h5filename)), end='')
+        print(format_progress(read_progress(we_h5filename, self.max_total_iterations)), end='')
 
 
 def entry_point():

@@ -7,6 +7,7 @@ import numpy as np
 
 from westpa.core.h5io import WESTPAH5File
 from westpa.core.segment import Segment
+from westpa.tools import WESTTool, WESTDataReader
 
 
 def read_progress(we_h5filename, max_total_iterations=None, n_recent=5):
@@ -84,3 +85,36 @@ def format_progress(progress):
 
     width = 26
     return ''.join(f'{label.ljust(width)} {value}\n' for label, value in rows)
+
+
+class WProgress(WESTTool):
+    '''Print a progress dashboard.'''
+
+    prog = 'w_progress'
+    description = 'Show the progress of a WESTPA simulation.'
+
+    def __init__(self):
+        super().__init__()
+        self.data_reader = WESTDataReader()
+
+    def add_args(self, parser):
+        '''Add the -W option.'''
+        self.data_reader.add_args(parser)
+
+    def process_args(self, args):
+        '''Get the HDF5 file from -W or west.cfg.'''
+        self.data_reader.process_args(args)
+
+    def go(self):
+        '''Print the dashboard once.'''
+        we_h5filename = self.data_reader.we_h5filename
+        print(f'WESTPA progress for {we_h5filename} (updated {datetime.now():%H:%M:%S})\n')
+        print(format_progress(read_progress(we_h5filename)), end='')
+
+
+def entry_point():
+    WProgress().main()
+
+
+if __name__ == '__main__':
+    entry_point()

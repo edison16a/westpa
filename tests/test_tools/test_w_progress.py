@@ -1,14 +1,23 @@
 from datetime import datetime
+from unittest import mock
+import argparse
 import subprocess
 import sys
 
 import pytest
 
-from westpa.cli.tools.w_progress import format_progress, read_progress
+from westpa.cli.tools.w_progress import entry_point, format_progress, read_progress
 
 
 class Test_W_Progress:
     """Test class for w_progress tool."""
+
+    def args(self):
+        return argparse.Namespace(
+            verbosity=None,
+            rcfile=None,
+            we_h5filename=self.h5_filepath,
+        )
 
     def test_completed_run(self, ref_50iter):
         progress = read_progress(self.h5_filepath, max_total_iterations=50)
@@ -98,3 +107,12 @@ ETA:                       0:02:54
         assert 'Progress:                  0 completed\n' in output
         assert 'Recent walltimes:          unknown\n' in output
         assert 'ETA:                       unknown\n' in output
+
+    def test_default(self, ref_50iter, capsys):
+        with mock.patch('argparse.ArgumentParser.parse_args', return_value=self.args()):
+            entry_point()
+        output = capsys.readouterr().out
+
+        assert output.startswith(f'WESTPA progress for {self.h5_filepath} (updated ')
+        assert 'Current iteration:         51\n' in output
+        assert 'Progress:                  50 / 50 iterations (100.0%)\n' in output

@@ -118,6 +118,8 @@ class WProgress(WESTTool):
         self.data_reader.process_args(args)
         self.max_total_iterations = westpa.rc.config.get(['west', 'propagation', 'max_total_iterations'])
 
+        if args.refresh <= 0:
+            self.parser.error('argument --refresh: must be greater than 0')
         self.refresh = args.refresh
 
     def go(self):

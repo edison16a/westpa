@@ -125,14 +125,20 @@ class WProgress(WESTTool):
     def go(self):
         '''Redraw the dashboard every --refresh seconds.'''
         we_h5filename = self.data_reader.we_h5filename
+        body = ''
         try:
             while True:
-                body = format_progress(read_progress(we_h5filename, self.max_total_iterations))
+                try:
+                    body = format_progress(read_progress(we_h5filename, self.max_total_iterations))
+                    error = ''
+                except Exception as e:
+                    # A read can fail mid flush. Keep the last output and retry.
+                    error = f'Could not read {we_h5filename}: {e}\n'
 
                 if sys.stdout.isatty():
                     print('\033[H\033[J', end='')  # clear the terminal
                 print(f'WESTPA progress for {we_h5filename} (updated {datetime.now():%H:%M:%S})\n')
-                print(body, end='', flush=True)
+                print(body + error, end='', flush=True)
                 time.sleep(self.refresh)
         except KeyboardInterrupt:
             print()

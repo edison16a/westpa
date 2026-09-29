@@ -8,7 +8,7 @@ from westpa.core.h5io import WESTPAH5File
 from westpa.core.segment import Segment
 
 
-def read_progress(we_h5filename):
+def read_progress(we_h5filename, n_recent=5):
     '''Return a dict of progress info from ``we_h5filename``.'''
 
     # w_run keeps west.h5 locked while it runs. Open without locking and read
@@ -22,7 +22,10 @@ def read_progress(we_h5filename):
         except KeyError:
             seg_status = np.empty((0,), dtype=np.uint8)
 
+    # Ignore NaN and zero walltimes (truncated runs can leave these)
     walltimes = summary['walltime']
+    recent_walltimes = walltimes[np.isfinite(walltimes) & (walltimes > 0)][-n_recent:]
+    avg_walltime = float(recent_walltimes.mean()) if len(recent_walltimes) else None
 
     return {
         'mtime': os.path.getmtime(we_h5filename),
@@ -33,4 +36,6 @@ def read_progress(we_h5filename):
         'n_failed': int(np.count_nonzero(seg_status == Segment.SEG_STATUS_FAILED)),
         'n_particles': int(summary['n_particles'].sum()),
         'walltime': float(np.nansum(walltimes)),
+        'recent_walltimes': recent_walltimes.tolist(),
+        'avg_walltime': avg_walltime,
     }

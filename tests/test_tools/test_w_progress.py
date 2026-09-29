@@ -1,3 +1,6 @@
+import subprocess
+import sys
+
 import pytest
 
 from westpa.cli.tools.w_progress import read_progress
@@ -31,3 +34,16 @@ class Test_W_Progress:
         assert progress['n_particles'] == 0
         assert progress['recent_walltimes'] == []
         assert progress['eta'] is None
+
+    def test_file_open_for_writing(self, ref_50iter):
+        # Lock west.h5 from another process like w_run does
+        code = f"import h5py, time; f = h5py.File({self.h5_filepath!r}, 'r+'); print('ready', flush=True); time.sleep(60)"
+        writer = subprocess.Popen([sys.executable, '-c', code], stdout=subprocess.PIPE, text=True)
+        try:
+            assert writer.stdout.readline().strip() == 'ready'
+            progress = read_progress(self.h5_filepath)
+        finally:
+            writer.kill()
+            writer.wait()
+
+        assert progress['n_iter'] == 51
